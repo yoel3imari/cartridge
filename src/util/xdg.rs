@@ -35,8 +35,8 @@ impl XdgPaths {
         self.data_home().join("cartridge")
     }
 
-    /// Legacy root directory for aim: ~/.local/share/aim
-    pub fn legacy_aim_data_dir(&self) -> PathBuf {
+    /// Legacy root data directory: ~/.local/share/aim
+    pub fn legacy_data_dir(&self) -> PathBuf {
         self.data_home().join("aim")
     }
 
@@ -75,14 +75,9 @@ impl XdgPaths {
         self.cartridge_cache_dir()
     }
 
-    /// Legacy cache directory alias for backwards compatibility
-    pub fn aim_cache_dir(&self) -> PathBuf {
-        self.cartridge_cache_dir()
-    }
-
-    /// Automatically migrate legacy aim data to cartridge if present
-    pub fn migrate_from_aim_if_needed(&self) -> std::io::Result<()> {
-        let legacy_data = self.legacy_aim_data_dir();
+    /// Automatically migrate legacy data to cartridge if present
+    pub fn migrate_legacy_data_if_needed(&self) -> std::io::Result<()> {
+        let legacy_data = self.legacy_data_dir();
         let new_data = self.cartridge_data_dir();
 
         // 1. Migrate ~/.local/share/aim -> ~/.local/share/cartridge
@@ -213,7 +208,7 @@ impl XdgPaths {
 
     /// Ensure that standard cartridge directories exist
     pub fn ensure_dirs(&self) -> std::io::Result<()> {
-        let _ = self.migrate_from_aim_if_needed();
+        let _ = self.migrate_legacy_data_if_needed();
         std::fs::create_dir_all(self.apps_dir())?;
         std::fs::create_dir_all(self.bin_dir())?;
         std::fs::create_dir_all(self.applications_dir())?;

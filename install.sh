@@ -81,13 +81,10 @@ if curl -sSL --fail "$DOWNLOAD_URL" -o "$TMP_DIR/$ARCHIVE_NAME"; then
     else
         ln -sf "$INSTALL_DIR/cart" "$INSTALL_DIR/cartridge"
     fi
-    # Maintain backwards compatibility symlink
-    ln -sf "$INSTALL_DIR/cart" "$INSTALL_DIR/aim"
 else
     warn "Direct release asset not found. Building with cargo..."
     if command -v cargo >/dev/null 2>&1; then
         cargo install --git "https://github.com/${REPO}.git"
-        ln -sf "$INSTALL_DIR/cart" "$INSTALL_DIR/aim"
     else
         error "Failed to download binary and cargo is not installed."
     fi

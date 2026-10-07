@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::catalog::models::{GitHubRelease, GitHubReleaseAsset};
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 use crate::util::arch::{asset_score, current_arch, matches_arch};
 
 pub struct GitHubClient {
@@ -43,7 +43,7 @@ impl GitHubClient {
             .trim_matches('/');
         let parts: Vec<&str> = clean.split('/').collect();
         if parts.len() < 2 {
-            return Err(AimError::Catalog(format!(
+            return Err(CartridgeError::Catalog(format!(
                 "Invalid GitHub repository identifier '{owner_repo}', expected 'owner/repo'"
             )));
         }
@@ -62,18 +62,20 @@ impl GitHubClient {
             );
             let list_resp = self.client.get(&releases_url).send().await?;
             if !list_resp.status().is_success() {
-                return Err(AimError::NotFound(format!(
+                return Err(CartridgeError::NotFound(format!(
                     "No releases found for GitHub repo '{owner_repo}'"
                 )));
             }
             let list: Vec<GitHubRelease> = list_resp.json().await?;
             return list.into_iter().next().ok_or_else(|| {
-                AimError::NotFound(format!("No releases found for GitHub repo '{owner_repo}'"))
+                CartridgeError::NotFound(format!(
+                    "No releases found for GitHub repo '{owner_repo}'"
+                ))
             });
         }
 
         if !resp.status().is_success() {
-            return Err(AimError::Catalog(format!(
+            return Err(CartridgeError::Catalog(format!(
                 "GitHub API returned HTTP {}: {}",
                 resp.status(),
                 resp.text().await.unwrap_or_default()
@@ -111,7 +113,7 @@ impl GitHubClient {
             .select_best_appimage(&release.assets, arch)
             .cloned()
             .ok_or_else(|| {
-                AimError::NotFound(format!(
+                CartridgeError::NotFound(format!(
                     "No AppImage asset found for architecture '{}' in {} release {}",
                     arch, owner_repo, release.tag_name
                 ))

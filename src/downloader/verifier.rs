@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 
 pub fn compute_sha256(path: &Path) -> Result<String> {
     let file = File::open(path)?;
@@ -26,7 +26,7 @@ pub fn compute_sha256(path: &Path) -> Result<String> {
 pub fn verify_checksum(path: &Path, expected_hash: &str) -> Result<()> {
     let actual_hash = compute_sha256(path)?;
     if !actual_hash.eq_ignore_ascii_case(expected_hash.trim()) {
-        return Err(AimError::Install(format!(
+        return Err(CartridgeError::Install(format!(
             "Checksum mismatch! Expected: {}, Computed: {}",
             expected_hash, actual_hash
         )));

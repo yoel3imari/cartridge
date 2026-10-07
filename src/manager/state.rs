@@ -45,7 +45,7 @@ impl StateStore {
     }
 
     pub fn load(&self) -> Result<AppRegistry> {
-        let _ = self.xdg.migrate_from_aim_if_needed();
+        let _ = self.xdg.migrate_legacy_data_if_needed();
         let path = self.state_file();
         if !path.exists() {
             return Ok(AppRegistry::default());

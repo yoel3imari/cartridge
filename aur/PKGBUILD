@@ -13,7 +13,7 @@ optdepends=(
     'desktop-file-utils: automatic desktop database updating'
     'gtk3: GTK icon cache updating'
 )
-provides=('cartridge' 'cart' 'aim')
+provides=('cartridge' 'cart')
 conflicts=('cartridge')
 
 source_x86_64=("${url}/releases/download/v${pkgver}/cartridge-v${pkgver}-x86_64-unknown-linux-musl.tar.gz")

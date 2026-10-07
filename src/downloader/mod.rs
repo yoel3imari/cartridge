@@ -11,7 +11,7 @@ use reqwest::Client;
 
 use crate::downloader::progress::create_download_progress_bar;
 use crate::downloader::verifier::compute_sha256;
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 
 pub struct Downloader {
     client: Client,
@@ -45,10 +45,10 @@ impl Downloader {
             .get(url)
             .send()
             .await
-            .map_err(AimError::Network)?;
+            .map_err(CartridgeError::Network)?;
 
         if !resp.status().is_success() {
-            return Err(AimError::Install(format!(
+            return Err(CartridgeError::Install(format!(
                 "Download failed with HTTP status: {}",
                 resp.status()
             )));
@@ -62,7 +62,7 @@ impl Downloader {
         let mut stream = resp.bytes_stream();
 
         while let Some(chunk_result) = stream.next().await {
-            let chunk = chunk_result.map_err(AimError::Network)?;
+            let chunk = chunk_result.map_err(CartridgeError::Network)?;
             file.write_all(&chunk)?;
             downloaded += chunk.len() as u64;
             pb.set_position(downloaded);

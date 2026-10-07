@@ -10,5 +10,5 @@ pub mod sandbox;
 pub mod util;
 
 pub use app::run;
-pub use error::{AimError, CartridgeError, Result};
+pub use error::{CartridgeError, Result};
 pub use manager::AppManager;

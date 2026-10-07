@@ -9,7 +9,7 @@ use comfy_table::{Cell, Color, Table};
 
 use crate::catalog::{SearchService, clean_app_name, sanitize_id};
 use crate::downloader::Downloader;
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 use crate::extractor::AppImageExtractor;
 use crate::integrator::Integrator;
 use crate::manager::state::{InstalledApp, StateStore, now_iso};
@@ -26,7 +26,7 @@ pub struct AppManager {
 impl AppManager {
     pub fn new() -> Self {
         let xdg = XdgPaths::new();
-        let _ = xdg.migrate_from_aim_if_needed();
+        let _ = xdg.migrate_legacy_data_if_needed();
         Self {
             xdg,
             state: StateStore::new(),
@@ -51,7 +51,7 @@ impl AppManager {
             if expanded_path.exists() {
                 return self.integrate_local_file(&expanded_path, custom_id);
             } else {
-                return Err(AimError::NotFound(format!(
+                return Err(CartridgeError::NotFound(format!(
                     "Local file '{}' not found.",
                     target
                 )));
@@ -108,7 +108,7 @@ impl AppManager {
         // Case 3: Search catalog for matching app
         let results = self.search_service.search(target, None, 5, false).await?;
         if results.is_empty() {
-            return Err(AimError::NotFound(format!(
+            return Err(CartridgeError::NotFound(format!(
                 "No AppImage found for query '{}'. Try 'cart search <query>' or specify a GitHub repo 'owner/repo'.",
                 target
             )));
@@ -151,7 +151,7 @@ impl AppManager {
                 .await;
         }
 
-        Err(AimError::Install(format!(
+        Err(CartridgeError::Install(format!(
             "Could not resolve a direct download asset for '{}'.",
             best.name
         )))
@@ -217,7 +217,7 @@ impl AppManager {
         custom_id: Option<&str>,
     ) -> Result<InstalledApp> {
         if !local_path.exists() {
-            return Err(AimError::NotFound(format!(
+            return Err(CartridgeError::NotFound(format!(
                 "File does not exist: {}",
                 local_path.display()
             )));
@@ -373,7 +373,7 @@ impl AppManager {
             return Ok(());
         }
 
-        Err(AimError::NotFound(format!(
+        Err(CartridgeError::NotFound(format!(
             "Application '{}' not found",
             target
         )))
@@ -382,7 +382,7 @@ impl AppManager {
     /// Remove an installed application
     pub fn remove(&self, app_id: &str, purge: bool) -> Result<()> {
         let app = self.state.get_app(app_id)?.ok_or_else(|| {
-            AimError::NotFound(format!("Application '{}' is not installed", app_id))
+            CartridgeError::NotFound(format!("Application '{}' is not installed", app_id))
         })?;
 
         println!("🗑️  Removing {}...", app.name);
@@ -420,7 +420,7 @@ impl AppManager {
         let apps_to_update = match app_id {
             Some(id) => {
                 let app = self.state.get_app(id)?.ok_or_else(|| {
-                    AimError::NotFound(format!("Application '{}' is not installed", id))
+                    CartridgeError::NotFound(format!("Application '{}' is not installed", id))
                 })?;
                 vec![app]
             }
@@ -516,18 +516,18 @@ impl AppManager {
     /// Rollback an application to its previous version
     pub fn rollback(&self, app_id: &str) -> Result<()> {
         let mut app = self.state.get_app(app_id)?.ok_or_else(|| {
-            AimError::NotFound(format!("Application '{}' is not installed", app_id))
+            CartridgeError::NotFound(format!("Application '{}' is not installed", app_id))
         })?;
 
         let backup_path = app.backup_binary_path.as_ref().ok_or_else(|| {
-            AimError::Other(format!(
+            CartridgeError::Other(format!(
                 "No previous rollback version available for '{}'",
                 app_id
             ))
         })?;
 
         if !backup_path.exists() {
-            return Err(AimError::Other(format!(
+            return Err(CartridgeError::Other(format!(
                 "Rollback file not found at {}",
                 backup_path.display()
             )));
@@ -572,7 +572,7 @@ impl AppManager {
     pub fn clean(&self) -> Result<()> {
         let bin_dir = self.xdg.bin_dir();
         let apps_dir = self.xdg.apps_dir();
-        let legacy_apps_dir = self.xdg.legacy_aim_data_dir().join("apps");
+        let legacy_apps_dir = self.xdg.legacy_data_dir().join("apps");
         let mut cleaned_items = 0;
 
         if bin_dir.exists() {
@@ -581,7 +581,7 @@ impl AppManager {
                 if path.is_symlink()
                     && let Ok(target) = fs::read_link(&path)
                 {
-                    // Check if pointing to cartridge or legacy aim directory and destination is gone
+                    // Check if pointing to cartridge or legacy data directory and destination is gone
                     if (target.starts_with(&apps_dir) || target.starts_with(&legacy_apps_dir))
                         && !target.exists()
                     {

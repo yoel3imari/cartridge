@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Iconic Rebranding to Cartridge**: Clean, distro-adoptable identity (`cart` and `cartridge` binaries) embodying the plug-and-play cartridge metaphor.
-- **Automated Migration Engine**: Seamless backward compatibility that automatically detects and migrates legacy installations from `aim` without downtime or data loss.
+- **Automated Migration Engine**: Seamless backward compatibility that automatically detects and migrates legacy installations without downtime or data loss.
 - **Global Catalog Search**: Integrated with AppImageHub (~3,000 community applications) with automatic background caching and fuzzy matching.
 - **Direct GitHub Releases Support**: Resolve and install AppImages directly using `owner/repo` identifiers (e.g. `cart install neovim/neovim`).
 - **Direct URL & Local File Support**: Install from direct HTTPS URLs or integrate existing local `.AppImage` files.

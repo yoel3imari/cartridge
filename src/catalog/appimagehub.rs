@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 
 use crate::catalog::models::{AppImageHubFeed, AppImageHubFeedRaw, FeedItem};
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 use crate::util::xdg::XdgPaths;
 
 pub const FEED_URL: &str = "https://appimage.github.io/feed.json";
@@ -27,7 +27,7 @@ impl AppImageHubCatalog {
     }
 
     pub fn cache_file_path(&self) -> PathBuf {
-        self.xdg.aim_cache_dir().join("appimagehub_feed.json")
+        self.xdg.cache_dir().join("appimagehub_feed.json")
     }
 
     /// Load catalog from cache if valid, or download fresh copy
@@ -38,8 +38,8 @@ impl AppImageHubCatalog {
             && cache_path.exists()
             && let Ok(metadata) = fs::metadata(&cache_path)
             && let Ok(modified) = metadata.modified()
-            && let Ok(age) = SystemTime::now().duration_since(modified)
-            && age < CACHE_TTL
+            && let Ok(elapsed) = SystemTime::now().duration_since(modified)
+            && elapsed < CACHE_TTL
             && let Ok(content) = fs::read_to_string(&cache_path)
             && let Ok(raw) = serde_json::from_str::<AppImageHubFeedRaw>(&content)
         {
@@ -59,28 +59,26 @@ impl AppImageHubCatalog {
             .timeout(Duration::from_secs(30))
             .build()?;
 
-        let response =
-            client.get(FEED_URL).send().await.map_err(|e| {
-                AimError::Catalog(format!("Failed to download AppImageHub feed: {e}"))
-            })?;
+        let response = client.get(FEED_URL).send().await.map_err(|e| {
+            CartridgeError::Catalog(format!("Failed to download AppImageHub feed: {e}"))
+        })?;
 
         if !response.status().is_success() {
-            return Err(AimError::Catalog(format!(
+            return Err(CartridgeError::Catalog(format!(
                 "Failed to fetch feed, HTTP status: {}",
                 response.status()
             )));
         }
 
-        let body = response
-            .text()
-            .await
-            .map_err(|e| AimError::Catalog(format!("Failed to read feed response body: {e}")))?;
+        let body = response.text().await.map_err(|e| {
+            CartridgeError::Catalog(format!("Failed to read feed response body: {e}"))
+        })?;
 
         // Cache the raw content to disk
         let _ = fs::write(&cache_path, &body);
 
         let raw: AppImageHubFeedRaw = serde_json::from_str(&body).map_err(|e| {
-            AimError::Catalog(format!("Failed to parse AppImageHub feed JSON: {e}"))
+            CartridgeError::Catalog(format!("Failed to parse AppImageHub feed JSON: {e}"))
         })?;
 
         Ok(AppImageHubFeed::from_raw(raw))
@@ -89,10 +87,12 @@ impl AppImageHubCatalog {
     /// Find an item by exact or normalized name
     pub async fn find_item(&self, name: &str) -> Result<Option<FeedItem>> {
         let feed = self.load_or_fetch(false).await?;
-        let norm = name.trim().to_lowercase();
+        let name_lower = name.to_lowercase();
 
         for item in feed.items {
-            if item.get_name().to_lowercase() == norm {
+            if let Some(ref item_name) = item.name
+                && item_name.to_lowercase() == name_lower
+            {
                 return Ok(Some(item));
             }
         }

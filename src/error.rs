@@ -39,5 +39,4 @@ pub enum CartridgeError {
     Other(String),
 }
 
-pub type AimError = CartridgeError;
 pub type Result<T> = std::result::Result<T, CartridgeError>;

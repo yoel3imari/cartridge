@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::{Command, ExitStatus};
 
-use crate::error::{AimError, Result};
+use crate::error::{CartridgeError, Result};
 
 pub struct SandboxRunner;
 
@@ -24,7 +24,7 @@ impl SandboxRunner {
         allow_network: bool,
     ) -> Result<ExitStatus> {
         if !Self::is_available() {
-            return Err(AimError::Sandbox(
+            return Err(CartridgeError::Sandbox(
                 "Bubblewrap ('bwrap') is not installed or not found in PATH.".to_string(),
             ));
         }
@@ -78,7 +78,7 @@ impl SandboxRunner {
 
         let status = cmd
             .status()
-            .map_err(|e| AimError::Sandbox(format!("Failed to spawn sandbox: {e}")))?;
+            .map_err(|e| CartridgeError::Sandbox(format!("Failed to spawn sandbox: {e}")))?;
 
         Ok(status)
     }

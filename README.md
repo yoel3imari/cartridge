@@ -44,7 +44,7 @@ Both `cart` (short, ergonomic) and `cartridge` (descriptive) binaries are provid
 - 🛡️ **Built-in Sandboxing**: Run unverified AppImages in an isolated Bubblewrap (`bwrap`) container with read-only root and optional network disabling.
 - 🧹 **Zero-Residue Removal**: Cleanly removes binaries, launchers, icons, and symlinks with `cart remove <app>`.
 - ⚡ **Zero-Dependency Static Binary**: Written in modern Rust, single binary, boots in <10ms.
-- 🧳 **Seamless Migration**: Automatically detects and migrates existing legacy installations from `aim` without data loss.
+- 🧳 **Seamless Migration**: Automatically detects and migrates legacy installations without data loss.
 
 ---
 
