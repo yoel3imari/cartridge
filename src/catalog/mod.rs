@@ -180,3 +180,31 @@ pub fn sanitize_id(name: &str) -> String {
         .trim_matches('-')
         .to_string()
 }
+
+pub fn clean_app_name(file_name: &str) -> String {
+    let base = file_name
+        .trim_end_matches(".AppImage")
+        .trim_end_matches(".appimage");
+
+    let without_arch = base
+        .replace("-linux-x86_64", "")
+        .replace("-linux-amd64", "")
+        .replace("-linux-aarch64", "")
+        .replace("-linux-arm64", "")
+        .replace("-x86_64", "")
+        .replace("-amd64", "")
+        .replace("-aarch64", "")
+        .replace("-arm64", "")
+        .replace("-i686", "")
+        .replace(".x86_64", "")
+        .replace(".amd64", "");
+
+    if let Ok(re) = regex::Regex::new(r"[-_]v?\d+(\.\d+)*.*$") {
+        let cleaned = re.replace(&without_arch, "").to_string();
+        if !cleaned.is_empty() {
+            return cleaned;
+        }
+    }
+
+    without_arch
+}

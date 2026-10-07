@@ -7,8 +7,7 @@ use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, Table};
 
-use crate::catalog::SearchService;
-use crate::catalog::sanitize_id;
+use crate::catalog::{SearchService, clean_app_name, sanitize_id};
 use crate::downloader::Downloader;
 use crate::error::{AimError, Result};
 use crate::extractor::AppImageExtractor;
@@ -69,16 +68,13 @@ impl AppManager {
                 .next_back()
                 .unwrap_or("app.AppImage");
 
-            let app_id = custom_id.map(|s| s.to_string()).unwrap_or_else(|| {
-                sanitize_id(
-                    file_name
-                        .trim_end_matches(".AppImage")
-                        .trim_end_matches(".appimage"),
-                )
-            });
+            let app_name = clean_app_name(file_name);
+            let app_id = custom_id
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| sanitize_id(&app_name));
 
             return self
-                .download_and_install_file(target, &app_id, &app_id, "unknown", target, file_name)
+                .download_and_install_file(target, &app_id, &app_name, "unknown", target, file_name)
                 .await;
         }
 
@@ -238,10 +234,8 @@ impl AppManager {
             crate::integrator::desktop_file::DesktopEntryMutator::extract_name_from_desktop,
         );
 
-        let fallback_name = file_name
-            .trim_end_matches(".AppImage")
-            .trim_end_matches(".appimage");
-        let app_name = discovered_name.unwrap_or_else(|| fallback_name.to_string());
+        let fallback_name = clean_app_name(file_name);
+        let app_name = discovered_name.unwrap_or(fallback_name);
 
         let app_id = custom_id
             .map(|s| s.to_string())
