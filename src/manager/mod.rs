@@ -297,7 +297,6 @@ impl AppManager {
                 Cell::new("Name").fg(Color::Cyan),
                 Cell::new("Version").fg(Color::Cyan),
                 Cell::new("Size").fg(Color::Cyan),
-                Cell::new("Source").fg(Color::Cyan),
                 Cell::new("Command").fg(Color::Cyan),
             ]);
 
@@ -315,7 +314,6 @@ impl AppManager {
                 Cell::new(&app.name),
                 Cell::new(&app.version).fg(Color::Yellow),
                 Cell::new(size_mb),
-                Cell::new(&app.source),
                 Cell::new(cmd).fg(Color::Cyan),
             ]);
         }
