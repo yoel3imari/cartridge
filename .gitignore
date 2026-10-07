@@ -1,0 +1,19 @@
+# Rust build artifacts
+/target
+Cargo.lock
+
+# Test artifacts and fixtures
+tests/fixtures/runtime
+tests/fixtures/*.squashfs
+tests/fixtures/*.AppImage
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db

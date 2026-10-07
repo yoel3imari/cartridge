@@ -1,0 +1,42 @@
+# Maintainer: yoel3imari <https://github.com/yoel3imari>
+pkgname=aim-bin
+_pkgname=aim
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Modern AppImage CLI Manager for Linux"
+arch=('x86_64' 'aarch64')
+url="https://github.com/yoel3imari/aim"
+license=('MIT')
+depends=('squashfs-tools')
+optdepends=(
+    'bubblewrap: sandboxed application execution'
+    'desktop-file-utils: automatic desktop database updating'
+    'gtk3: GTK icon cache updating'
+)
+provides=('aim')
+conflicts=('aim')
+
+source_x86_64=("${url}/releases/download/v${pkgver}/aim-v${pkgver}-x86_64-unknown-linux-musl.tar.gz")
+source_aarch64=("${url}/releases/download/v${pkgver}/aim-v${pkgver}-aarch64-unknown-linux-musl.tar.gz")
+
+sha256sums_x86_64=('SKIP')
+sha256sums_aarch64=('SKIP')
+
+package() {
+    cd "${srcdir}/aim-v${pkgver}-${CARCH}-unknown-linux-musl"
+
+    install -Dm755 "${_pkgname}" "${pkgdir}/usr/bin/${_pkgname}"
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+
+    # Shell completions
+    if [ -f "completions/aim.bash" ]; then
+        install -Dm644 "completions/aim.bash" "${pkgdir}/usr/share/bash-completion/completions/aim"
+    fi
+    if [ -f "completions/_aim" ]; then
+        install -Dm644 "completions/_aim" "${pkgdir}/usr/share/zsh/site-functions/_aim"
+    fi
+    if [ -f "completions/aim.fish" ]; then
+        install -Dm644 "completions/aim.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/aim.fish"
+    fi
+}

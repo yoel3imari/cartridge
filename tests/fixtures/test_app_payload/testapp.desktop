@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Test Application
+Comment=A test AppImage package
+Exec=testapp %u
+Icon=testapp
+Categories=Development;
