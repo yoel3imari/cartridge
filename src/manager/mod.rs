@@ -26,8 +26,10 @@ pub struct AppManager {
 
 impl AppManager {
     pub fn new() -> Self {
+        let xdg = XdgPaths::new();
+        let _ = xdg.migrate_from_aim_if_needed();
         Self {
-            xdg: XdgPaths::new(),
+            xdg,
             state: StateStore::new(),
             downloader: Downloader::new(),
             integrator: Integrator::new(),
@@ -111,7 +113,7 @@ impl AppManager {
         let results = self.search_service.search(target, None, 5, false).await?;
         if results.is_empty() {
             return Err(AimError::NotFound(format!(
-                "No AppImage found for query '{}'. Try 'aim search <query>' or specify a GitHub repo 'owner/repo'.",
+                "No AppImage found for query '{}'. Try 'cart search <query>' or specify a GitHub repo 'owner/repo'.",
                 target
             )));
         }
@@ -287,7 +289,7 @@ impl AppManager {
         let apps = self.state.list_apps()?;
         if apps.is_empty() {
             println!(
-                "No AppImages currently managed by aim. Install one using 'aim install <app>'!"
+                "No AppImages currently managed by cartridge. Install one using 'cart install <app>'!"
             );
             return Ok(());
         }
@@ -578,6 +580,7 @@ impl AppManager {
     pub fn clean(&self) -> Result<()> {
         let bin_dir = self.xdg.bin_dir();
         let apps_dir = self.xdg.apps_dir();
+        let legacy_apps_dir = self.xdg.legacy_aim_data_dir().join("apps");
         let mut cleaned_items = 0;
 
         if bin_dir.exists() {
@@ -586,8 +589,10 @@ impl AppManager {
                 if path.is_symlink()
                     && let Ok(target) = fs::read_link(&path)
                 {
-                    // Check if pointing to aim directory and destination is gone
-                    if target.starts_with(&apps_dir) && !target.exists() {
+                    // Check if pointing to cartridge or legacy aim directory and destination is gone
+                    if (target.starts_with(&apps_dir) || target.starts_with(&legacy_apps_dir))
+                        && !target.exists()
+                    {
                         println!("🧹 Removing broken symlink: {}", path.display());
                         let _ = fs::remove_file(&path);
                         cleaned_items += 1;

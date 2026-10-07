@@ -1,11 +1,11 @@
 # Maintainer: yoel3imari <https://github.com/yoel3imari>
-pkgname=aim-bin
-_pkgname=aim
+pkgname=cartridge-bin
+_pkgname=cartridge
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="Modern AppImage CLI Manager for Linux"
+pkgdesc="The application cartridge manager for Linux"
 arch=('x86_64' 'aarch64')
-url="https://github.com/yoel3imari/aim"
+url="https://github.com/yoel3imari/cartridge"
 license=('MIT')
 depends=('squashfs-tools')
 optdepends=(
@@ -13,30 +13,38 @@ optdepends=(
     'desktop-file-utils: automatic desktop database updating'
     'gtk3: GTK icon cache updating'
 )
-provides=('aim')
-conflicts=('aim')
+provides=('cartridge' 'cart' 'aim')
+conflicts=('cartridge')
 
-source_x86_64=("${url}/releases/download/v${pkgver}/aim-v${pkgver}-x86_64-unknown-linux-musl.tar.gz")
-source_aarch64=("${url}/releases/download/v${pkgver}/aim-v${pkgver}-aarch64-unknown-linux-musl.tar.gz")
+source_x86_64=("${url}/releases/download/v${pkgver}/cartridge-v${pkgver}-x86_64-unknown-linux-musl.tar.gz")
+source_aarch64=("${url}/releases/download/v${pkgver}/cartridge-v${pkgver}-aarch64-unknown-linux-musl.tar.gz")
 
 sha256sums_x86_64=('SKIP')
 sha256sums_aarch64=('SKIP')
 
 package() {
-    cd "${srcdir}/aim-v${pkgver}-${CARCH}-unknown-linux-musl"
+    cd "${srcdir}/cartridge-v${pkgver}-${CARCH}-unknown-linux-musl"
 
-    install -Dm755 "${_pkgname}" "${pkgdir}/usr/bin/${_pkgname}"
+    install -Dm755 "cart" "${pkgdir}/usr/bin/cart"
+    if [ -f "cartridge" ]; then
+        install -Dm755 "cartridge" "${pkgdir}/usr/bin/cartridge"
+    else
+        ln -sf "/usr/bin/cart" "${pkgdir}/usr/bin/cartridge"
+    fi
     install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
     install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 
     # Shell completions
-    if [ -f "completions/aim.bash" ]; then
-        install -Dm644 "completions/aim.bash" "${pkgdir}/usr/share/bash-completion/completions/aim"
+    if [ -f "completions/cart.bash" ]; then
+        install -Dm644 "completions/cart.bash" "${pkgdir}/usr/share/bash-completion/completions/cart"
+        install -Dm644 "completions/cartridge.bash" "${pkgdir}/usr/share/bash-completion/completions/cartridge"
     fi
-    if [ -f "completions/_aim" ]; then
-        install -Dm644 "completions/_aim" "${pkgdir}/usr/share/zsh/site-functions/_aim"
+    if [ -f "completions/_cart" ]; then
+        install -Dm644 "completions/_cart" "${pkgdir}/usr/share/zsh/site-functions/_cart"
+        install -Dm644 "completions/_cartridge" "${pkgdir}/usr/share/zsh/site-functions/_cartridge"
     fi
-    if [ -f "completions/aim.fish" ]; then
-        install -Dm644 "completions/aim.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/aim.fish"
+    if [ -f "completions/cart.fish" ]; then
+        install -Dm644 "completions/cart.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/cart.fish"
+        install -Dm644 "completions/cartridge.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/cartridge.fish"
     fi
 }

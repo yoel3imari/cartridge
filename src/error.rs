@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum AimError {
+pub enum CartridgeError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -39,4 +39,5 @@ pub enum AimError {
     Other(String),
 }
 
-pub type Result<T> = std::result::Result<T, AimError>;
+pub type AimError = CartridgeError;
+pub type Result<T> = std::result::Result<T, CartridgeError>;

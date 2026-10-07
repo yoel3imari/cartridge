@@ -1,4 +1,4 @@
-use aim::integrator::desktop_file::DesktopEntryMutator;
+use cartridge::integrator::desktop_file::DesktopEntryMutator;
 use std::path::Path;
 
 #[test]
@@ -7,8 +7,8 @@ fn test_generate_new_desktop_entry() {
         None,
         "kdenlive",
         "Kdenlive Video Editor",
-        Path::new("/home/user/.local/share/aim/apps/kdenlive/kdenlive.AppImage"),
-        "aim-kdenlive",
+        Path::new("/home/user/.local/share/cartridge/apps/kdenlive/kdenlive.AppImage"),
+        "cart-kdenlive",
         &["AudioVideo".to_string(), "Video".to_string()],
         Some("Video Editing Software"),
     );
@@ -16,9 +16,11 @@ fn test_generate_new_desktop_entry() {
     assert!(entry.contains("[Desktop Entry]"));
     assert!(entry.contains("Name=Kdenlive Video Editor"));
     assert!(
-        entry.contains("Exec=\"/home/user/.local/share/aim/apps/kdenlive/kdenlive.AppImage\" %U")
+        entry.contains(
+            "Exec=\"/home/user/.local/share/cartridge/apps/kdenlive/kdenlive.AppImage\" %U"
+        )
     );
-    assert!(entry.contains("Icon=aim-kdenlive"));
+    assert!(entry.contains("Icon=cart-kdenlive"));
     assert!(entry.contains("Categories=AudioVideo;Video;"));
     assert!(entry.contains("StartupWMClass=kdenlive"));
 }
@@ -38,17 +40,22 @@ Categories=Utility;
         Some(existing),
         "existing-app",
         "Existing App",
-        Path::new("/home/user/.local/share/aim/apps/existing-app/app.AppImage"),
-        "aim-existing-app",
+        Path::new("/home/user/.local/share/cartridge/apps/existing-app/app.AppImage"),
+        "cart-existing-app",
         &[],
         None,
     );
 
     assert!(mutated.contains("Name=Existing App"));
     assert!(
-        mutated.contains("Exec=\"/home/user/.local/share/aim/apps/existing-app/app.AppImage\" %U")
+        mutated.contains(
+            "Exec=\"/home/user/.local/share/cartridge/apps/existing-app/app.AppImage\" %U"
+        )
     );
-    assert!(mutated.contains("Icon=aim-existing-app"));
-    assert!(mutated.contains("TryExec=/home/user/.local/share/aim/apps/existing-app/app.AppImage"));
+    assert!(mutated.contains("Icon=cart-existing-app"));
+    assert!(
+        mutated
+            .contains("TryExec=/home/user/.local/share/cartridge/apps/existing-app/app.AppImage")
+    );
     assert!(mutated.contains("Comment=An existing application"));
 }

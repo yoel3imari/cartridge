@@ -1,4 +1,4 @@
-use aim::util::arch;
+use cartridge::util::arch;
 
 #[test]
 fn test_matches_arch_x86_64() {

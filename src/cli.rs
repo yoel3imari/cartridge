@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "aim",
+    name = "cart",
     author = "yoel3imari",
     version,
-    about = "Modern AppImage CLI Manager for Linux",
-    long_about = "Search, install, integrate, update, sandbox, and manage AppImage applications seamlessly."
+    about = "Cartridge: The application cartridge manager for Linux",
+    long_about = "Plug-and-play AppImage cartridge manager for Linux. Search, install, integrate, update, sandbox, and manage self-contained application cartridges seamlessly."
 )]
 pub struct Cli {
     #[command(subcommand)]

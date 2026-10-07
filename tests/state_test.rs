@@ -1,4 +1,4 @@
-use aim::manager::state::{AppRegistry, InstalledApp};
+use cartridge::manager::state::{AppRegistry, InstalledApp};
 use std::path::PathBuf;
 
 #[test]

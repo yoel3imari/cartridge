@@ -4,13 +4,12 @@ use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, Table};
 use std::process::Command;
 
-use aim::cli::{Cli, Commands};
-use aim::error::{AimError, Result};
-use aim::manager::AppManager;
-use aim::sandbox::SandboxRunner;
+use crate::cli::{Cli, Commands};
+use crate::error::{CartridgeError, Result};
+use crate::manager::AppManager;
+use crate::sandbox::SandboxRunner;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+pub async fn run() -> Result<()> {
     let cli = Cli::parse();
     let manager = AppManager::new();
 
@@ -55,7 +54,7 @@ async fn main() -> Result<()> {
             }
 
             println!("{table}");
-            println!("💡 To install: aim install <ID>");
+            println!("💡 To install: cart install <ID>");
         }
 
         Commands::Install(args) => {
@@ -93,11 +92,11 @@ async fn main() -> Result<()> {
 
         Commands::Run(args) => {
             let app = manager.state().get_app(&args.app_id)?.ok_or_else(|| {
-                AimError::NotFound(format!("Application '{}' is not installed", args.app_id))
+                CartridgeError::NotFound(format!("Application '{}' is not installed", args.app_id))
             })?;
 
             if !app.binary_path.exists() {
-                return Err(AimError::NotFound(format!(
+                return Err(CartridgeError::NotFound(format!(
                     "AppImage binary not found at {}",
                     app.binary_path.display()
                 )));
@@ -112,7 +111,9 @@ async fn main() -> Result<()> {
                 let status = Command::new(&app.binary_path)
                     .args(&args.args)
                     .status()
-                    .map_err(|e| AimError::Other(format!("Failed to execute application: {e}")))?;
+                    .map_err(|e| {
+                        CartridgeError::Other(format!("Failed to execute application: {e}"))
+                    })?;
                 std::process::exit(status.code().unwrap_or(0));
             }
         }
@@ -137,7 +138,20 @@ async fn main() -> Result<()> {
         Commands::Completions(args) => {
             use clap::CommandFactory;
             let mut cmd = Cli::command();
-            clap_complete::generate(args.shell, &mut cmd, "aim", &mut std::io::stdout());
+            let bin_name = std::env::args()
+                .next()
+                .and_then(|p| {
+                    std::path::Path::new(&p)
+                        .file_name()
+                        .map(|s| s.to_string_lossy().to_string())
+                })
+                .unwrap_or_else(|| "cart".to_string());
+            let bin_name = if bin_name.contains("cartridge") {
+                "cartridge"
+            } else {
+                "cart"
+            };
+            clap_complete::generate(args.shell, &mut cmd, bin_name, &mut std::io::stdout());
         }
     }
 

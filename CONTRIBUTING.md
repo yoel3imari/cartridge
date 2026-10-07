@@ -1,6 +1,6 @@
-# Contributing to aim
+# Contributing to Cartridge
 
-Thank you for your interest in contributing to **`aim`**!
+Thank you for your interest in contributing to **`Cartridge` (`cart`)**!
 
 We welcome pull requests, bug reports, documentation improvements, and feature suggestions.
 
@@ -28,10 +28,10 @@ We welcome pull requests, bug reports, documentation improvements, and feature s
 
 ```bash
 # Clone the repository
-git clone https://github.com/yoel3imari/aim.git
-cd aim
+git clone https://github.com/yoel3imari/cartridge.git
+cd cartridge
 
-# Build debug binary
+# Build debug binaries (cart & cartridge)
 cargo build
 
 # Run unit and integration tests
@@ -49,7 +49,7 @@ cargo fmt --check
 ## Code Quality Standards
 
 Before opening a pull request, please make sure:
-1. `cargo test` passes cleanly.
+1. `cargo test` passes cleanly with all tests green.
 2. `cargo clippy --all-targets -- -D warnings` emits zero warnings.
 3. `cargo fmt --check` passes without differences (run `cargo fmt` to apply).
 
@@ -58,7 +58,15 @@ Before opening a pull request, please make sure:
 ## Commit Guidelines
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
-- `feat: add support for custom repository catalogs`
-- `fix: ensure TryExec is never quoted in desktop entries`
-- `docs: update installation instructions in README`
-- `test: add unit test for arch scoring`
+- `feat:` New features or capabilities
+- `fix:` Bug fixes
+- `docs:` Documentation improvements
+- `refactor:` Code refactoring without behavioral changes
+- `test:` Adding or updating tests
+- `chore:` Release, build system, or dependency updates
+
+---
+
+## License
+
+By contributing to Cartridge, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).

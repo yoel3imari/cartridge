@@ -13,7 +13,7 @@ impl GitHubClient {
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             reqwest::header::USER_AGENT,
-            reqwest::header::HeaderValue::from_static("aim-appimage-manager/0.1"),
+            reqwest::header::HeaderValue::from_static("cartridge/0.1.0"),
         );
         headers.insert(
             reqwest::header::ACCEPT,

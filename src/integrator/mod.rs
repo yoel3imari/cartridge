@@ -44,7 +44,7 @@ impl Integrator {
         self.xdg.ensure_dirs()?;
 
         // 1. Install icons
-        let icon_name = format!("aim-{}", app_id);
+        let icon_name = format!("cart-{}", app_id);
         let icon_paths = IconInstaller::install_icon(
             &self.xdg,
             app_id,
@@ -73,7 +73,7 @@ impl Integrator {
         let desktop_file = self
             .xdg
             .applications_dir()
-            .join(format!("aim-{}.desktop", app_id));
+            .join(format!("cart-{}.desktop", app_id));
         fs::write(&desktop_file, desktop_content)?;
 
         // 3. Create ~/.local/bin symlink
@@ -108,9 +108,16 @@ impl Integrator {
         let fallback_df = self
             .xdg
             .applications_dir()
-            .join(format!("aim-{}.desktop", app_id));
+            .join(format!("cart-{}.desktop", app_id));
         if fallback_df.exists() {
             let _ = fs::remove_file(fallback_df);
+        }
+        let legacy_df = self
+            .xdg
+            .applications_dir()
+            .join(format!("aim-{}.desktop", app_id));
+        if legacy_df.exists() {
+            let _ = fs::remove_file(legacy_df);
         }
 
         // Remove icons

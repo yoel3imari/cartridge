@@ -1,15 +1,27 @@
 [package]
-name = "aim"
+name = "cartridge"
 version = "0.1.0"
 edition = "2024"
-description = "Modern AppImage CLI Manager for Linux"
+description = "The application cartridge manager for Linux"
 authors = ["yoel3imari"]
 license = "MIT"
-repository = "https://github.com/yoel3imari/aim"
-homepage = "https://github.com/yoel3imari/aim"
+repository = "https://github.com/yoel3imari/cartridge"
+homepage = "https://github.com/yoel3imari/cartridge"
 readme = "README.md"
-keywords = ["appimage", "package-manager", "cli", "linux", "desktop-integration"]
+keywords = ["appimage", "cartridge", "package-manager", "cli", "linux"]
 categories = ["command-line-utilities", "os::linux-apis"]
+
+[lib]
+name = "cartridge"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cart"
+path = "src/bin/cart.rs"
+
+[[bin]]
+name = "cartridge"
+path = "src/bin/cartridge.rs"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive", "cargo"] }

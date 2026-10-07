@@ -20,7 +20,7 @@ pub struct Downloader {
 impl Downloader {
     pub fn new() -> Self {
         let client = Client::builder()
-            .user_agent("aim-appimage-manager/0.1")
+            .user_agent("cartridge/0.1.0")
             .timeout(Duration::from_secs(600)) // 10 minutes timeout for large binaries
             .build()
             .unwrap_or_default();

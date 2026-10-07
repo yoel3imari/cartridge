@@ -17,7 +17,7 @@ impl IconInstaller {
     ) -> Result<Vec<PathBuf>> {
         let mut installed_paths = Vec::new();
         let ext = extension.unwrap_or("png");
-        let icon_filename = format!("aim-{}.{}", app_id, ext);
+        let icon_filename = format!("cart-{}.{}", app_id, ext);
 
         // Target directories: scalable for SVG, 256x256 for PNG
         let target_subdir = if ext == "svg" {

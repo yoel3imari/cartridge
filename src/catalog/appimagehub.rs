@@ -55,7 +55,7 @@ impl AppImageHubCatalog {
         let cache_path = self.cache_file_path();
 
         let client = reqwest::Client::builder()
-            .user_agent("aim-appimage-manager/0.1")
+            .user_agent("cartridge/0.1.0")
             .timeout(Duration::from_secs(30))
             .build()?;
 

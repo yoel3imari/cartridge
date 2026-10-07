@@ -54,16 +54,20 @@ jobs:
       - name: Package archive
         run: |
           TAG_NAME="${{ github.ref_name }}"
-          PKG_NAME="aim-${TAG_NAME}-${{ matrix.target }}"
+          PKG_NAME="cartridge-${TAG_NAME}-${{ matrix.target }}"
           mkdir -p "dist/${PKG_NAME}"
-          cp "target/${{ matrix.target }}/release/aim" "dist/${PKG_NAME}/"
+          cp "target/${{ matrix.target }}/release/cart" "dist/${PKG_NAME}/"
+          cp "target/${{ matrix.target }}/release/cartridge" "dist/${PKG_NAME}/"
           cp README.md LICENSE "dist/${PKG_NAME}/"
 
           # Generate completions
           mkdir -p "dist/${PKG_NAME}/completions"
-          ./target/${{ matrix.target }}/release/aim completions bash > "dist/${PKG_NAME}/completions/aim.bash" 2>/dev/null || true
-          ./target/${{ matrix.target }}/release/aim completions zsh > "dist/${PKG_NAME}/completions/_aim" 2>/dev/null || true
-          ./target/${{ matrix.target }}/release/aim completions fish > "dist/${PKG_NAME}/completions/aim.fish" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cart completions bash > "dist/${PKG_NAME}/completions/cart.bash" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cart completions zsh > "dist/${PKG_NAME}/completions/_cart" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cart completions fish > "dist/${PKG_NAME}/completions/cart.fish" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cartridge completions bash > "dist/${PKG_NAME}/completions/cartridge.bash" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cartridge completions zsh > "dist/${PKG_NAME}/completions/_cartridge" 2>/dev/null || true
+          ./target/${{ matrix.target }}/release/cartridge completions fish > "dist/${PKG_NAME}/completions/cartridge.fish" 2>/dev/null || true
 
           cd dist
           tar -czvf "${PKG_NAME}.tar.gz" "${PKG_NAME}"
