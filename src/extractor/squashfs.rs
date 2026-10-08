@@ -269,7 +269,8 @@ impl AppImageExtractor {
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
             let is_icon_candidate = file_name == ".DirIcon"
-                || (!file_name.starts_with('.') && (file_name.ends_with(".svg") || file_name.ends_with(".png")));
+                || (!file_name.starts_with('.')
+                    && (file_name.ends_with(".svg") || file_name.ends_with(".png")));
 
             if !is_icon_candidate {
                 continue;
@@ -277,19 +278,19 @@ impl AppImageExtractor {
 
             // Resolve symlinks (which inside SquashFS often target absolute /usr/... inside the image)
             let mut resolved_path = path.to_path_buf();
-            if path.is_symlink() {
-                if let Ok(link_target) = fs::read_link(path) {
-                    if link_target.is_absolute() {
-                        let stripped = link_target.strip_prefix("/").unwrap_or(&link_target);
-                        let candidate = extract_dest.join(stripped);
-                        if candidate.exists() {
-                            resolved_path = candidate;
-                        }
-                    } else if let Some(parent) = path.parent() {
-                        let candidate = parent.join(&link_target);
-                        if candidate.exists() {
-                            resolved_path = candidate;
-                        }
+            if path.is_symlink()
+                && let Ok(link_target) = fs::read_link(path)
+            {
+                if link_target.is_absolute() {
+                    let stripped = link_target.strip_prefix("/").unwrap_or(&link_target);
+                    let candidate = extract_dest.join(stripped);
+                    if candidate.exists() {
+                        resolved_path = candidate;
+                    }
+                } else if let Some(parent) = path.parent() {
+                    let candidate = parent.join(&link_target);
+                    if candidate.exists() {
+                        resolved_path = candidate;
                     }
                 }
             }
@@ -346,8 +347,12 @@ impl AppImageExtractor {
                     48_000
                 } else if path_str.contains("32x32") {
                     32_000
-                } else if bytes.len() >= 24 && &bytes[0..8] == b"\x89PNG\r\n\x1a\n" && &bytes[12..16] == b"IHDR" {
-                    let w = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]) as usize;
+                } else if bytes.len() >= 24
+                    && &bytes[0..8] == b"\x89PNG\r\n\x1a\n"
+                    && &bytes[12..16] == b"IHDR"
+                {
+                    let w =
+                        u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]) as usize;
                     w * 1000
                 } else {
                     32_000

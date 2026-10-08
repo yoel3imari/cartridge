@@ -91,10 +91,16 @@ Exec=editor --new-tab
         None,
     );
 
-    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" %F"));
+    assert!(mutated.contains(
+        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" %F"
+    ));
     assert!(mutated.contains("StartupWMClass=text-editor"));
-    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-window"));
-    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-tab"));
+    assert!(mutated.contains(
+        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-window"
+    ));
+    assert!(mutated.contains(
+        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-tab"
+    ));
 }
 
 #[test]

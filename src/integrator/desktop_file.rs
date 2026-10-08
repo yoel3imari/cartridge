@@ -32,9 +32,9 @@ impl DesktopEntryMutator {
             return None;
         }
 
-        let rest = if line.starts_with('"') {
-            if let Some(end_quote) = line[1..].find('"') {
-                line[end_quote + 2..].trim()
+        let rest = if let Some(stripped) = line.strip_prefix('"') {
+            if let Some(end_quote) = stripped.find('"') {
+                stripped[end_quote + 1..].trim()
             } else {
                 ""
             }

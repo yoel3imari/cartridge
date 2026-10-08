@@ -48,12 +48,7 @@ impl DistroInfo {
 
             match key {
                 "ID" => id = val.to_lowercase(),
-                "ID_LIKE" => {
-                    id_like = val
-                        .split_whitespace()
-                        .map(|s| s.to_lowercase())
-                        .collect()
-                }
+                "ID_LIKE" => id_like = val.split_whitespace().map(|s| s.to_lowercase()).collect(),
                 "VERSION_ID" => version_id = val.to_string(),
                 "PRETTY_NAME" => pretty_name = val.to_string(),
                 _ => {}

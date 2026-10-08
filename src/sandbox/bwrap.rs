@@ -40,7 +40,9 @@ impl SandboxRunner {
         cmd.arg("--ro-bind-try").arg("/sbin").arg("/sbin");
         cmd.arg("--ro-bind-try").arg("/etc").arg("/etc");
         cmd.arg("--ro-bind-try").arg("/opt").arg("/opt");
-        cmd.arg("--ro-bind-try").arg("/usr/local/share").arg("/usr/local/share");
+        cmd.arg("--ro-bind-try")
+            .arg("/usr/local/share")
+            .arg("/usr/local/share");
 
         // 2. Dynamic system devices and runtime
         cmd.arg("--proc").arg("/proc");
@@ -50,10 +52,18 @@ impl SandboxRunner {
         cmd.arg("--tmpfs").arg("/dev/shm"); // POSIX shared memory for Chromium/Electron/Qt/GTK
 
         // 3. DNS and network state forwarding when inside tmpfs /run
-        cmd.arg("--ro-bind-try").arg("/run/systemd/resolve").arg("/run/systemd/resolve");
-        cmd.arg("--ro-bind-try").arg("/run/NetworkManager").arg("/run/NetworkManager");
-        cmd.arg("--ro-bind-try").arg("/run/resolvconf").arg("/run/resolvconf");
-        cmd.arg("--ro-bind-try").arg("/run/connman").arg("/run/connman");
+        cmd.arg("--ro-bind-try")
+            .arg("/run/systemd/resolve")
+            .arg("/run/systemd/resolve");
+        cmd.arg("--ro-bind-try")
+            .arg("/run/NetworkManager")
+            .arg("/run/NetworkManager");
+        cmd.arg("--ro-bind-try")
+            .arg("/run/resolvconf")
+            .arg("/run/resolvconf");
+        cmd.arg("--ro-bind-try")
+            .arg("/run/connman")
+            .arg("/run/connman");
         cmd.arg("--ro-bind-try").arg("/run/netns").arg("/run/netns");
 
         // If /etc/resolv.conf is a symlink pointing into /run, bind its canonical destination
@@ -88,12 +98,20 @@ impl SandboxRunner {
         }
 
         // 5. CA certificates and font cache across major distros (Ubuntu, Fedora, Arch, openSUSE, Alpine)
-        cmd.arg("--ro-bind-try").arg("/var/cache/fontconfig").arg("/var/cache/fontconfig");
-        cmd.arg("--ro-bind-try").arg("/var/lib/ca-certificates").arg("/var/lib/ca-certificates");
+        cmd.arg("--ro-bind-try")
+            .arg("/var/cache/fontconfig")
+            .arg("/var/cache/fontconfig");
+        cmd.arg("--ro-bind-try")
+            .arg("/var/lib/ca-certificates")
+            .arg("/var/lib/ca-certificates");
         cmd.arg("--ro-bind-try").arg("/etc/ssl").arg("/etc/ssl");
         cmd.arg("--ro-bind-try").arg("/etc/pki").arg("/etc/pki");
-        cmd.arg("--ro-bind-try").arg("/etc/ca-certificates").arg("/etc/ca-certificates");
-        cmd.arg("--ro-bind-try").arg("/var/lib/dbus/machine-id").arg("/var/lib/dbus/machine-id");
+        cmd.arg("--ro-bind-try")
+            .arg("/etc/ca-certificates")
+            .arg("/etc/ca-certificates");
+        cmd.arg("--ro-bind-try")
+            .arg("/var/lib/dbus/machine-id")
+            .arg("/var/lib/dbus/machine-id");
 
         // 6. Network isolation
         if !allow_network {
@@ -129,7 +147,9 @@ impl SandboxRunner {
 
         let legacy_xauth = Path::new(&home).join(".Xauthority");
         if legacy_xauth.exists() {
-            cmd.arg("--ro-bind-try").arg(&legacy_xauth).arg(&legacy_xauth);
+            cmd.arg("--ro-bind-try")
+                .arg(&legacy_xauth)
+                .arg(&legacy_xauth);
         }
 
         // 10. Mount the binary itself read-only executable

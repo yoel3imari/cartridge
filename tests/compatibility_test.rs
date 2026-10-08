@@ -64,13 +64,8 @@ fn test_multi_resolution_icon_installation() {
         0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54,
     ];
 
-    let installed = IconInstaller::install_icon(
-        &xdg,
-        "testapp",
-        Some(&dummy_png),
-        None,
-        Some("png"),
-    ).unwrap();
+    let installed =
+        IconInstaller::install_icon(&xdg, "testapp", Some(&dummy_png), None, Some("png")).unwrap();
 
     assert!(!installed.is_empty());
     // Verify primary 256x256 was installed
@@ -78,8 +73,16 @@ fn test_multi_resolution_icon_installation() {
     assert!(primary.exists());
 
     // Verify multi-resolution directories were populated for DE compatibility
-    assert!(xdg.icons_dir().join("512x512/apps/cart-testapp.png").exists());
-    assert!(xdg.icons_dir().join("128x128/apps/cart-testapp.png").exists());
+    assert!(
+        xdg.icons_dir()
+            .join("512x512/apps/cart-testapp.png")
+            .exists()
+    );
+    assert!(
+        xdg.icons_dir()
+            .join("128x128/apps/cart-testapp.png")
+            .exists()
+    );
     assert!(xdg.icons_dir().join("48x48/apps/cart-testapp.png").exists());
     assert!(xdg.pixmaps_dir().join("cart-testapp.png").exists());
 }
@@ -121,7 +124,10 @@ fn test_desktop_file_validator() {
         .status()
         .unwrap();
 
-    assert!(status.success(), "Generated .desktop file failed FreeDesktop validation!");
+    assert!(
+        status.success(),
+        "Generated .desktop file failed FreeDesktop validation!"
+    );
 }
 
 #[test]

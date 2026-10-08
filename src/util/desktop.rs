@@ -16,12 +16,19 @@ pub enum DesktopEnvironment {
 
 impl DesktopEnvironment {
     pub fn detect() -> Self {
-        let xdg_current = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default().to_uppercase();
-        let desktop_session = std::env::var("DESKTOP_SESSION").unwrap_or_default().to_uppercase();
+        let xdg_current = std::env::var("XDG_CURRENT_DESKTOP")
+            .unwrap_or_default()
+            .to_uppercase();
+        let desktop_session = std::env::var("DESKTOP_SESSION")
+            .unwrap_or_default()
+            .to_uppercase();
 
         if xdg_current.contains("GNOME") || desktop_session.contains("GNOME") {
             Self::Gnome
-        } else if xdg_current.contains("KDE") || desktop_session.contains("KDE") || desktop_session.contains("PLASMA") {
+        } else if xdg_current.contains("KDE")
+            || desktop_session.contains("KDE")
+            || desktop_session.contains("PLASMA")
+        {
             Self::Kde
         } else if xdg_current.contains("XFCE") || desktop_session.contains("XFCE") {
             Self::Xfce
@@ -43,7 +50,9 @@ impl DesktopEnvironment {
 
 /// Check if a given directory is in the current process $PATH
 pub fn is_in_path(target_dir: &Path) -> bool {
-    let canonical_target = target_dir.canonicalize().unwrap_or_else(|_| target_dir.to_path_buf());
+    let canonical_target = target_dir
+        .canonicalize()
+        .unwrap_or_else(|_| target_dir.to_path_buf());
     if let Some(path_var) = std::env::var_os("PATH") {
         for entry in std::env::split_paths(&path_var) {
             let canonical_entry = entry.canonicalize().unwrap_or(entry);
