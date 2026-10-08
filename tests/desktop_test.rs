@@ -1,6 +1,29 @@
 use cartridge::integrator::desktop_file::DesktopEntryMutator;
 use std::path::Path;
 
+fn assert_contains_exec(content: &str, exec_path: &str, args: &str) {
+    let direct = if args.is_empty() {
+        format!("Exec=\"{}\"", exec_path)
+    } else {
+        format!("Exec=\"{}\" {}", exec_path, args)
+    };
+    let fallback = if args.is_empty() {
+        format!("Exec=env APPIMAGE_EXTRACT_AND_RUN=1 \"{}\"", exec_path)
+    } else {
+        format!(
+            "Exec=env APPIMAGE_EXTRACT_AND_RUN=1 \"{}\" {}",
+            exec_path, args
+        )
+    };
+    assert!(
+        content.contains(&direct) || content.contains(&fallback),
+        "assertion failed: expected desktop entry to contain either:\n  {}\nor:\n  {}\nactual content:\n{}",
+        direct,
+        fallback,
+        content
+    );
+}
+
 #[test]
 fn test_generate_new_desktop_entry() {
     let entry = DesktopEntryMutator::build_desktop_entry(
@@ -15,10 +38,10 @@ fn test_generate_new_desktop_entry() {
 
     assert!(entry.contains("[Desktop Entry]"));
     assert!(entry.contains("Name=Kdenlive Video Editor"));
-    assert!(
-        entry.contains(
-            "Exec=\"/home/user/.local/share/cartridge/apps/kdenlive/kdenlive.AppImage\" %U"
-        )
+    assert_contains_exec(
+        &entry,
+        "/home/user/.local/share/cartridge/apps/kdenlive/kdenlive.AppImage",
+        "%U",
     );
     assert!(entry.contains("Icon=cart-kdenlive"));
     assert!(entry.contains("Categories=AudioVideo;Video;"));
@@ -47,10 +70,10 @@ Categories=Utility;
     );
 
     assert!(mutated.contains("Name=Existing App"));
-    assert!(
-        mutated.contains(
-            "Exec=\"/home/user/.local/share/cartridge/apps/existing-app/app.AppImage\" %U"
-        )
+    assert_contains_exec(
+        &mutated,
+        "/home/user/.local/share/cartridge/apps/existing-app/app.AppImage",
+        "%U",
     );
     assert!(mutated.contains("Icon=cart-existing-app"));
     assert!(
@@ -91,16 +114,22 @@ Exec=editor --new-tab
         None,
     );
 
-    assert!(mutated.contains(
-        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" %F"
-    ));
+    assert_contains_exec(
+        &mutated,
+        "/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage",
+        "%F",
+    );
     assert!(mutated.contains("StartupWMClass=text-editor"));
-    assert!(mutated.contains(
-        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-window"
-    ));
-    assert!(mutated.contains(
-        "Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-tab"
-    ));
+    assert_contains_exec(
+        &mutated,
+        "/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage",
+        "--new-window",
+    );
+    assert_contains_exec(
+        &mutated,
+        "/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage",
+        "--new-tab",
+    );
 }
 
 #[test]
@@ -124,7 +153,11 @@ Categories=Network;WebBrowser;
         None,
     );
 
-    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/chromium-app/app.AppImage\" --enable-features=UseOzonePlatform %U"));
+    assert_contains_exec(
+        &mutated,
+        "/home/user/.local/share/cartridge/apps/chromium-app/app.AppImage",
+        "--enable-features=UseOzonePlatform %U",
+    );
     // Preserves existing StartupWMClass
     assert!(mutated.contains("StartupWMClass=custom-class"));
 }
