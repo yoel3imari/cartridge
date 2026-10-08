@@ -68,15 +68,27 @@ DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}/${ARCHI
 
 # 5. Download and extract
 TMP_DIR=$(mktemp -d)
+BIN_DIR=""
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 info "Downloading $ARCHIVE_NAME..."
 if curl -sSL --fail "$DOWNLOAD_URL" -o "$TMP_DIR/$ARCHIVE_NAME"; then
     tar -xzf "$TMP_DIR/$ARCHIVE_NAME" -C "$TMP_DIR"
-    cp "$TMP_DIR/cart" "$INSTALL_DIR/cart"
+    if [ -f "$TMP_DIR/cart" ]; then
+        BIN_DIR="$TMP_DIR"
+    else
+        CART_PATH="$(find "$TMP_DIR" -type f -name cart | head -n 1)"
+        if [ -n "$CART_PATH" ]; then
+            BIN_DIR="$(dirname "$CART_PATH")"
+        else
+            error "Could not find 'cart' binary inside extracted archive."
+        fi
+    fi
+
+    cp "$BIN_DIR/cart" "$INSTALL_DIR/cart"
     chmod 755 "$INSTALL_DIR/cart"
-    if [ -f "$TMP_DIR/cartridge" ]; then
-        cp "$TMP_DIR/cartridge" "$INSTALL_DIR/cartridge"
+    if [ -f "$BIN_DIR/cartridge" ]; then
+        cp "$BIN_DIR/cartridge" "$INSTALL_DIR/cartridge"
         chmod 755 "$INSTALL_DIR/cartridge"
     else
         ln -sf "$INSTALL_DIR/cart" "$INSTALL_DIR/cartridge"
@@ -197,13 +209,25 @@ fi
 
 # 8. Setup shell completions if directory exists
 if [ -d "$HOME/.local/share/bash-completion/completions" ]; then
-    "$INSTALL_DIR/cart" completions bash > "$HOME/.local/share/bash-completion/completions/cart" 2>/dev/null || true
+    if [ -n "$BIN_DIR" ] && [ -f "$BIN_DIR/completions/cart.bash" ]; then
+        cp "$BIN_DIR/completions/cart.bash" "$HOME/.local/share/bash-completion/completions/cart"
+    elif [ -x "$INSTALL_DIR/cart" ]; then
+        "$INSTALL_DIR/cart" completions bash > "$HOME/.local/share/bash-completion/completions/cart" 2>/dev/null || true
+    fi
 fi
 if [ -d "$HOME/.config/fish/completions" ]; then
-    "$INSTALL_DIR/cart" completions fish > "$HOME/.config/fish/completions/cart.fish" 2>/dev/null || true
+    if [ -n "$BIN_DIR" ] && [ -f "$BIN_DIR/completions/cart.fish" ]; then
+        cp "$BIN_DIR/completions/cart.fish" "$HOME/.config/fish/completions/cart.fish"
+    elif [ -x "$INSTALL_DIR/cart" ]; then
+        "$INSTALL_DIR/cart" completions fish > "$HOME/.config/fish/completions/cart.fish" 2>/dev/null || true
+    fi
 fi
 if [ -d "$HOME/.zfunc" ]; then
-    "$INSTALL_DIR/cart" completions zsh > "$HOME/.zfunc/_cart" 2>/dev/null || true
+    if [ -n "$BIN_DIR" ] && [ -f "$BIN_DIR/completions/_cart" ]; then
+        cp "$BIN_DIR/completions/_cart" "$HOME/.zfunc/_cart"
+    elif [ -x "$INSTALL_DIR/cart" ]; then
+        "$INSTALL_DIR/cart" completions zsh > "$HOME/.zfunc/_cart" 2>/dev/null || true
+    fi
 fi
 
 success "Cartridge (cart) is installed and ready to use!"
