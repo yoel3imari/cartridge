@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📼 Cartridge (`cart`)
+# <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><img src="logo.png" style=" height: 3rem;" /> Cartridge (`cart`)</div>
 
 ### The Plug-and-Play Application Cartridge Manager for Linux
 
@@ -51,28 +51,23 @@ Both `cart` (short, ergonomic) and `cartridge` (descriptive) binaries are provid
 ## 🚀 Installation
 
 ### 1. One-Line Installer (Recommended)
+Automatically installs the binary to `~/.local/bin`, checks system dependencies, and sets up shell completions:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yoel3imari/cartridge/main/install.sh | bash
 ```
 
-### 2. Cargo (From Crates.io or Git)
+### 2. Cargo (From Git)
+Install directly from source via `cargo`:
 ```bash
-cargo install cartridge
-# or directly from git:
 cargo install --git https://github.com/yoel3imari/cartridge.git
 ```
 
-### 3. Arch Linux (AUR)
+Or from a local checkout:
 ```bash
-yay -S cartridge-bin
-# or
-paru -S cartridge-bin
+git clone https://github.com/yoel3imari/cartridge.git
+cd cartridge
+cargo install --path .
 ```
-
-### 4. Pre-Built Standalone Binaries
-Download the latest static binary for your architecture from [GitHub Releases](https://github.com/yoel3imari/cartridge/releases):
-- `x86_64` (64-bit Intel/AMD): [cartridge-v0.1.0-x86_64-unknown-linux-musl.tar.gz](https://github.com/yoel3imari/cartridge/releases)
-- `aarch64` (64-bit ARM / Raspberry Pi): [cartridge-v0.1.0-aarch64-unknown-linux-musl.tar.gz](https://github.com/yoel3imari/cartridge/releases)
 
 ---
 

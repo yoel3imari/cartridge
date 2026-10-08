@@ -58,4 +58,67 @@ Categories=Utility;
             .contains("TryExec=/home/user/.local/share/cartridge/apps/existing-app/app.AppImage")
     );
     assert!(mutated.contains("Comment=An existing application"));
+    assert!(mutated.contains("StartupWMClass=existing-app"));
+    assert!(mutated.contains("StartupNotify=true"));
+}
+
+#[test]
+fn test_mutate_desktop_entry_with_actions() {
+    let raw = r#"[Desktop Entry]
+Type=Application
+Name=Text Editor
+Exec=editor %F
+Icon=editor
+Categories=TextEditor;Development;
+Actions=NewWindow;NewTab;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=editor --new-window
+
+[Desktop Action NewTab]
+Name=New Tab
+Exec=editor --new-tab
+"#;
+
+    let mutated = DesktopEntryMutator::build_desktop_entry(
+        Some(raw),
+        "text-editor",
+        "Text Editor",
+        Path::new("/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage"),
+        "cart-text-editor",
+        &[],
+        None,
+    );
+
+    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" %F"));
+    assert!(mutated.contains("StartupWMClass=text-editor"));
+    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-window"));
+    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/text-editor/editor.AppImage\" --new-tab"));
+}
+
+#[test]
+fn test_mutate_desktop_entry_preserves_custom_flags() {
+    let raw = r#"[Desktop Entry]
+Type=Application
+Name=Chromium App
+Exec=chromium-browser --enable-features=UseOzonePlatform %U
+Icon=chromium
+StartupWMClass=custom-class
+Categories=Network;WebBrowser;
+"#;
+
+    let mutated = DesktopEntryMutator::build_desktop_entry(
+        Some(raw),
+        "chromium-app",
+        "Chromium App",
+        Path::new("/home/user/.local/share/cartridge/apps/chromium-app/app.AppImage"),
+        "cart-chromium-app",
+        &[],
+        None,
+    );
+
+    assert!(mutated.contains("Exec=\"/home/user/.local/share/cartridge/apps/chromium-app/app.AppImage\" --enable-features=UseOzonePlatform %U"));
+    // Preserves existing StartupWMClass
+    assert!(mutated.contains("StartupWMClass=custom-class"));
 }

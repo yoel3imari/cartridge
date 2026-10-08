@@ -52,9 +52,9 @@ info "Fetching latest release version from GitHub..."
 LATEST_TAG=$(curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name":' | head -n 1 | cut -d '"' -f 4 || true)
 
 if [ -z "$LATEST_TAG" ]; then
-    warn "Could not query GitHub releases API. Falling back to local cargo installation..."
+    warn "Could not query GitHub releases API. Falling back to git installation via cargo..."
     if command -v cargo >/dev/null 2>&1; then
-        cargo install cartridge
+        cargo install --git "https://github.com/${REPO}.git"
         success "Installed cartridge via cargo!"
         exit 0
     else
@@ -100,18 +100,99 @@ case ":$PATH:" in
         ;;
 esac
 
-# 7. Check helper dependencies
+# 7. Check helper dependencies across distributions
 info "Checking system utilities for optimal desktop integration..."
+HAS_FUSE=0
+if command -v ldconfig >/dev/null 2>&1 && ldconfig -p 2>/dev/null | grep -q "libfuse\.so\.2"; then
+    HAS_FUSE=1
+else
+    for d in /lib /lib64 /usr/lib /usr/lib64 /usr/lib/*-linux-gnu /usr/local/lib; do
+        if [ -f "$d/libfuse.so.2" ]; then
+            HAS_FUSE=1
+            break
+        fi
+    done
+fi
+
+DISTRO_ID="linux"
+DISTRO_VER=""
+if [ -f /etc/os-release ]; then
+    DISTRO_ID="$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"'\'' ' | tr '[:upper:]' '[:lower:]' || echo "linux")"
+    DISTRO_VER="$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"'\'' ' || true)"
+fi
+
 MISSING_TOOLS=""
-command -v unsquashfs >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS squashfs-tools"
+command -v unsquashfs >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS squashfs"
 command -v bwrap >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS bubblewrap"
 command -v update-desktop-database >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS desktop-file-utils"
 
+FUSE_PKG="libfuse2"
+if [ "$DISTRO_ID" = "ubuntu" ]; then
+    # Ubuntu 24.04+ (Noble Numbat and newer)
+    if [ -n "$DISTRO_VER" ] && [ "$(echo "$DISTRO_VER >= 24.0" | bc 2>/dev/null || echo 0)" = "1" ]; then
+        FUSE_PKG="libfuse2t64"
+    fi
+elif [ "$DISTRO_ID" = "fedora" ] || [ "$DISTRO_ID" = "rhel" ] || [ "$DISTRO_ID" = "centos" ]; then
+    FUSE_PKG="fuse-libs"
+elif [ "$DISTRO_ID" = "arch" ] || [ "$DISTRO_ID" = "manjaro" ] || [ "$DISTRO_ID" = "endeavouros" ]; then
+    FUSE_PKG="fuse2"
+elif echo "$DISTRO_ID" | grep -qi "suse"; then
+    FUSE_PKG="libfuse2"
+elif [ "$DISTRO_ID" = "alpine" ]; then
+    FUSE_PKG="fuse"
+fi
+
+if [ "$HAS_FUSE" -eq 0 ]; then
+    MISSING_TOOLS="$MISSING_TOOLS $FUSE_PKG"
+fi
+
 if [ -n "$MISSING_TOOLS" ]; then
-    warn "Recommended system tools missing for full desktop & sandbox support:$MISSING_TOOLS"
-    printf "    On Debian/Ubuntu: sudo apt install%s\n" "$MISSING_TOOLS"
-    printf "    On Fedora:        sudo dnf install%s\n" "$MISSING_TOOLS"
-    printf "    On Arch Linux:    sudo pacman -S%s\n" "$MISSING_TOOLS"
+    warn "Recommended system utilities for optimal performance & sandboxing:$MISSING_TOOLS"
+    case "$DISTRO_ID" in
+        ubuntu|debian|linuxmint|pop)
+            DEB_PKGS=""
+            command -v unsquashfs >/dev/null 2>&1 || DEB_PKGS="$DEB_PKGS squashfs-tools"
+            command -v bwrap >/dev/null 2>&1 || DEB_PKGS="$DEB_PKGS bubblewrap"
+            command -v update-desktop-database >/dev/null 2>&1 || DEB_PKGS="$DEB_PKGS desktop-file-utils"
+            [ "$HAS_FUSE" -eq 0 ] && DEB_PKGS="$DEB_PKGS $FUSE_PKG"
+            printf "    Run: sudo apt install%s\n" "$DEB_PKGS"
+            ;;
+        fedora|rhel|centos)
+            RPM_PKGS=""
+            command -v unsquashfs >/dev/null 2>&1 || RPM_PKGS="$RPM_PKGS squashfs-tools"
+            command -v bwrap >/dev/null 2>&1 || RPM_PKGS="$RPM_PKGS bubblewrap"
+            command -v update-desktop-database >/dev/null 2>&1 || RPM_PKGS="$RPM_PKGS desktop-file-utils"
+            [ "$HAS_FUSE" -eq 0 ] && RPM_PKGS="$RPM_PKGS fuse-libs"
+            printf "    Run: sudo dnf install%s\n" "$RPM_PKGS"
+            ;;
+        arch|manjaro|endeavouros)
+            ARCH_PKGS=""
+            command -v unsquashfs >/dev/null 2>&1 || ARCH_PKGS="$ARCH_PKGS squashfs-tools"
+            command -v bwrap >/dev/null 2>&1 || ARCH_PKGS="$ARCH_PKGS bubblewrap"
+            command -v update-desktop-database >/dev/null 2>&1 || ARCH_PKGS="$ARCH_PKGS desktop-file-utils"
+            [ "$HAS_FUSE" -eq 0 ] && ARCH_PKGS="$ARCH_PKGS fuse2"
+            printf "    Run: sudo pacman -S%s\n" "$ARCH_PKGS"
+            ;;
+        *suse*)
+            ZYP_PKGS=""
+            command -v unsquashfs >/dev/null 2>&1 || ZYP_PKGS="$ZYP_PKGS squashfs"
+            command -v bwrap >/dev/null 2>&1 || ZYP_PKGS="$ZYP_PKGS bubblewrap"
+            command -v update-desktop-database >/dev/null 2>&1 || ZYP_PKGS="$ZYP_PKGS desktop-file-utils"
+            [ "$HAS_FUSE" -eq 0 ] && ZYP_PKGS="$ZYP_PKGS libfuse2"
+            printf "    Run: sudo zypper install%s\n" "$ZYP_PKGS"
+            ;;
+        alpine)
+            APK_PKGS=""
+            command -v unsquashfs >/dev/null 2>&1 || APK_PKGS="$APK_PKGS squashfs-tools"
+            command -v bwrap >/dev/null 2>&1 || APK_PKGS="$APK_PKGS bubblewrap"
+            command -v update-desktop-database >/dev/null 2>&1 || APK_PKGS="$APK_PKGS desktop-file-utils"
+            [ "$HAS_FUSE" -eq 0 ] && APK_PKGS="$APK_PKGS fuse"
+            printf "    Run: sudo apk add%s\n" "$APK_PKGS"
+            ;;
+        *)
+            printf "    Install equivalent packages: squashfs-tools, bubblewrap, desktop-file-utils, %s\n" "$FUSE_PKG"
+            ;;
+    esac
 fi
 
 # 8. Setup shell completions if directory exists
@@ -120,6 +201,9 @@ if [ -d "$HOME/.local/share/bash-completion/completions" ]; then
 fi
 if [ -d "$HOME/.config/fish/completions" ]; then
     "$INSTALL_DIR/cart" completions fish > "$HOME/.config/fish/completions/cart.fish" 2>/dev/null || true
+fi
+if [ -d "$HOME/.zfunc" ]; then
+    "$INSTALL_DIR/cart" completions zsh > "$HOME/.zfunc/_cart" 2>/dev/null || true
 fi
 
 success "Cartridge (cart) is installed and ready to use!"

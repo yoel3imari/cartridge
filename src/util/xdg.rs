@@ -75,6 +75,16 @@ impl XdgPaths {
         self.cartridge_cache_dir()
     }
 
+    /// FreeDesktop mime directory: ~/.local/share/mime/
+    pub fn mime_dir(&self) -> PathBuf {
+        self.data_home().join("mime")
+    }
+
+    /// FreeDesktop pixmaps directory: ~/.local/share/pixmaps/
+    pub fn pixmaps_dir(&self) -> PathBuf {
+        self.data_home().join("pixmaps")
+    }
+
     /// Automatically migrate legacy data to cartridge if present
     pub fn migrate_legacy_data_if_needed(&self) -> std::io::Result<()> {
         let legacy_data = self.legacy_data_dir();
@@ -213,6 +223,9 @@ impl XdgPaths {
         std::fs::create_dir_all(self.bin_dir())?;
         std::fs::create_dir_all(self.applications_dir())?;
         std::fs::create_dir_all(self.icons_dir())?;
+        std::fs::create_dir_all(self.icons_dir().join("scalable/apps"))?;
+        std::fs::create_dir_all(self.icons_dir().join("256x256/apps"))?;
+        std::fs::create_dir_all(self.pixmaps_dir())?;
         std::fs::create_dir_all(self.cartridge_cache_dir())?;
         Ok(())
     }

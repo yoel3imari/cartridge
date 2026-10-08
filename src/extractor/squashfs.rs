@@ -169,8 +169,9 @@ impl AppImageExtractor {
                 .arg(".DirIcon")
                 .arg("*.png")
                 .arg("*.svg")
-                .arg("usr/share/icons/*")
-                .arg("usr/share/applications/*")
+                .arg("usr/share/icons")
+                .arg("usr/share/pixmaps")
+                .arg("usr/share/applications")
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
                 .status();
@@ -212,13 +213,10 @@ impl AppImageExtractor {
             return Ok(ExtractedMetadata::default());
         }
 
-        // Parse extracted files
+        // 1. First pass: Parse extracted desktop files
         let mut desktop_content = None;
         let mut desktop_file_name = None;
-        let mut icon_path = None;
-        let mut icon_bytes = None;
-        let mut icon_extension = None;
-        let mut max_icon_size = 0;
+        let mut target_icon_name = None;
 
         for entry in WalkDir::new(&extract_dest)
             .max_depth(8)
@@ -228,60 +226,160 @@ impl AppImageExtractor {
             let path = entry.path();
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-            // Look for .desktop file
             if file_name.ends_with(".desktop")
                 && !file_name.starts_with('.')
                 && let Ok(content) = fs::read_to_string(path)
-                && (desktop_content.is_none() || content.contains("Name="))
+                && content.contains("Name=")
             {
-                desktop_content = Some(content);
-                desktop_file_name = Some(file_name.to_string());
-            }
-
-            // Look for icons
-            if file_name == ".DirIcon" {
-                if let Ok(bytes) = fs::read(path) {
-                    let ext = if bytes.starts_with(b"<svg") || bytes.starts_with(b"<?xml") {
-                        "svg"
-                    } else {
-                        "png"
-                    };
-                    icon_path = Some(path.to_path_buf());
-                    icon_bytes = Some(bytes);
-                    icon_extension = Some(ext.to_string());
-                    max_icon_size = usize::MAX; // .DirIcon has highest priority
-                }
-            } else if max_icon_size < usize::MAX
-                && (file_name.ends_with(".png") || file_name.ends_with(".svg"))
-                && !file_name.starts_with('.')
-            {
-                let ext = if file_name.ends_with(".svg") {
-                    "svg"
-                } else {
-                    "png"
-                };
-                if let Ok(bytes) = fs::read(path) {
-                    let score = if ext == "svg" {
-                        10_000_000
-                    } else {
-                        bytes.len()
-                    };
-                    if score > max_icon_size {
-                        max_icon_size = score;
-                        icon_path = Some(path.to_path_buf());
-                        icon_bytes = Some(bytes);
-                        icon_extension = Some(ext.to_string());
+                // Prefer root desktop file over subdirectories
+                let is_root = path.parent() == Some(&extract_dest);
+                if desktop_content.is_none() || is_root {
+                    // Extract icon name hint from desktop file
+                    for line in content.lines() {
+                        let trimmed = line.trim();
+                        if trimmed.starts_with("Icon=") {
+                            let icon_val = trimmed.trim_start_matches("Icon=").trim();
+                            if !icon_val.is_empty() {
+                                target_icon_name = Some(icon_val.to_string());
+                            }
+                            break;
+                        }
+                    }
+                    desktop_content = Some(content);
+                    desktop_file_name = Some(file_name.to_string());
+                    if is_root {
+                        break;
                     }
                 }
+            }
+        }
+
+        // 2. Second pass: Find and score best icon (prioritizing vector SVG, then HiDPI PNG)
+        let mut best_icon_path = None;
+        let mut best_icon_bytes = None;
+        let mut best_icon_extension = None;
+        let mut max_icon_score: usize = 0;
+
+        for entry in WalkDir::new(&extract_dest)
+            .max_depth(8)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let path = entry.path();
+            let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+            let is_icon_candidate = file_name == ".DirIcon"
+                || (!file_name.starts_with('.') && (file_name.ends_with(".svg") || file_name.ends_with(".png")));
+
+            if !is_icon_candidate {
+                continue;
+            }
+
+            // Resolve symlinks (which inside SquashFS often target absolute /usr/... inside the image)
+            let mut resolved_path = path.to_path_buf();
+            if path.is_symlink() {
+                if let Ok(link_target) = fs::read_link(path) {
+                    if link_target.is_absolute() {
+                        let stripped = link_target.strip_prefix("/").unwrap_or(&link_target);
+                        let candidate = extract_dest.join(stripped);
+                        if candidate.exists() {
+                            resolved_path = candidate;
+                        }
+                    } else if let Some(parent) = path.parent() {
+                        let candidate = parent.join(&link_target);
+                        if candidate.exists() {
+                            resolved_path = candidate;
+                        }
+                    }
+                }
+            }
+
+            let Ok(bytes) = fs::read(&resolved_path) else {
+                continue;
+            };
+
+            // Detect format
+            let ext = if file_name.ends_with(".svg")
+                || bytes.starts_with(b"<svg")
+                || bytes.starts_with(b"<?xml")
+            {
+                "svg"
+            } else if file_name.ends_with(".png")
+                || (bytes.len() >= 8 && &bytes[0..8] == b"\x89PNG\r\n\x1a\n")
+            {
+                "png"
+            } else {
+                continue;
+            };
+
+            let path_str = path.to_string_lossy();
+            let stem = file_name.trim_end_matches(".svg").trim_end_matches(".png");
+            let is_name_match = target_icon_name
+                .as_ref()
+                .map(|t| t == stem || t == file_name)
+                .unwrap_or(false);
+
+            let score = if ext == "svg" {
+                // SVGs provide infinite resolution for modern HiDPI/Wayland desktops (GNOME & KDE)
+                let mut s = 10_000_000;
+                if is_name_match {
+                    s += 5_000_000;
+                }
+                if path_str.contains("/apps/") {
+                    s += 1_000_000;
+                }
+                if file_name == ".DirIcon" {
+                    s += 500_000;
+                }
+                s
+            } else {
+                // PNG resolution scoring
+                let res_score = if path_str.contains("512x512") {
+                    512_000
+                } else if path_str.contains("256x256") {
+                    256_000
+                } else if path_str.contains("128x128") {
+                    128_000
+                } else if path_str.contains("64x64") {
+                    64_000
+                } else if path_str.contains("48x48") {
+                    48_000
+                } else if path_str.contains("32x32") {
+                    32_000
+                } else if bytes.len() >= 24 && &bytes[0..8] == b"\x89PNG\r\n\x1a\n" && &bytes[12..16] == b"IHDR" {
+                    let w = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]) as usize;
+                    w * 1000
+                } else {
+                    32_000
+                };
+
+                let mut s = res_score + (bytes.len() / 10).min(50_000);
+                if is_name_match {
+                    s += 200_000;
+                }
+                if path_str.contains("/apps/") {
+                    s += 50_000;
+                }
+                if file_name == ".DirIcon" {
+                    s += 10_000;
+                }
+                s
+            };
+
+            if score > max_icon_score {
+                max_icon_score = score;
+                best_icon_path = Some(resolved_path);
+                best_icon_bytes = Some(bytes);
+                best_icon_extension = Some(ext.to_string());
             }
         }
 
         Ok(ExtractedMetadata {
             desktop_content,
             desktop_file_name,
-            icon_path,
-            icon_bytes,
-            icon_extension,
+            icon_path: best_icon_path,
+            icon_bytes: best_icon_bytes,
+            icon_extension: best_icon_extension,
         })
     }
 }

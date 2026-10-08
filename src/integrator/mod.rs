@@ -4,7 +4,6 @@ pub mod symlink;
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use crate::error::Result;
 use crate::extractor::squashfs::ExtractedMetadata;
@@ -127,7 +126,15 @@ impl Integrator {
             }
         }
 
-        // Refresh system databases
+        // Additional cleanup for potential fallbacks
+        for ext in &["png", "svg"] {
+            let filename = format!("cart-{}.{}", app_id, ext);
+            let _ = fs::remove_file(self.xdg.pixmaps_dir().join(&filename));
+            let _ = fs::remove_file(self.xdg.home_dir.join(format!(".icons/{}", filename)));
+            let _ = fs::remove_file(self.xdg.data_home().join(format!("icons/{}", filename)));
+        }
+
+        // Refresh system databases across GNOME, KDE, and other desktop environments
         self.refresh_system_databases();
 
         Ok(())
@@ -135,21 +142,11 @@ impl Integrator {
 
     /// Trigger desktop environment database update commands
     pub fn refresh_system_databases(&self) {
-        let app_dir = self.xdg.applications_dir();
-        let _ = Command::new("update-desktop-database")
-            .arg(&app_dir)
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status();
-
-        let icon_dir = self.xdg.icons_dir();
-        let _ = Command::new("gtk-update-icon-cache")
-            .arg("-f")
-            .arg("-t")
-            .arg(&icon_dir)
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status();
+        crate::util::desktop::refresh_desktop_databases(
+            &self.xdg.applications_dir(),
+            &self.xdg.icons_dir(),
+            &self.xdg.mime_dir(),
+        );
     }
 }
 

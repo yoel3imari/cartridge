@@ -108,8 +108,18 @@ pub async fn run() -> Result<()> {
                     SandboxRunner::run_sandboxed(&app.binary_path, &args.args, !args.offline)?;
                 std::process::exit(status.code().unwrap_or(0));
             } else {
-                let status = Command::new(&app.binary_path)
-                    .args(&args.args)
+                let mut cmd = Command::new(&app.binary_path);
+                cmd.args(&args.args);
+
+                if !crate::util::fuse::is_fuse_available() {
+                    let distro = crate::util::fuse::DistroInfo::detect();
+                    let pkg = distro.recommended_fuse_package();
+                    println!("ℹ️  libfuse2 not detected on host. Running in extraction mode (APPIMAGE_EXTRACT_AND_RUN=1).");
+                    println!("💡 Tip: Install '{}' for faster native AppImage startup.", pkg);
+                    cmd.env("APPIMAGE_EXTRACT_AND_RUN", "1");
+                }
+
+                let status = cmd
                     .status()
                     .map_err(|e| {
                         CartridgeError::Other(format!("Failed to execute application: {e}"))

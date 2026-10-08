@@ -1,5 +1,5 @@
 # Maintainer: yoel3imari <https://github.com/yoel3imari>
-pkgname=cartridge-bin
+pkgname=cart-bin
 _pkgname=cartridge
 pkgver=0.1.0
 pkgrel=1
@@ -9,12 +9,14 @@ url="https://github.com/yoel3imari/cartridge"
 license=('MIT')
 depends=('squashfs-tools')
 optdepends=(
+    'fuse2: native AppImage mounting without extract mode'
     'bubblewrap: sandboxed application execution'
     'desktop-file-utils: automatic desktop database updating'
     'gtk3: GTK icon cache updating'
+    'kservice: automatic menu updating under KDE Plasma'
 )
-provides=('cartridge' 'cart')
-conflicts=('cartridge')
+provides=('cartridge' 'cart' 'cartridge-bin')
+conflicts=('cart' 'cartridge')
 
 source_x86_64=("${url}/releases/download/v${pkgver}/cartridge-v${pkgver}-x86_64-unknown-linux-musl.tar.gz")
 source_aarch64=("${url}/releases/download/v${pkgver}/cartridge-v${pkgver}-aarch64-unknown-linux-musl.tar.gz")

@@ -206,8 +206,26 @@ impl AppManager {
             "✨ Successfully installed {} v{}! Run it with: {}",
             app_name, version, app_id
         );
+        self.print_post_install_hints(app_id);
 
         Ok(installed_app)
+    }
+
+    fn print_post_install_hints(&self, app_id: &str) {
+        if !crate::util::desktop::is_in_path(&self.xdg.bin_dir()) {
+            println!(
+                "💡 Tip: {} is not in your $PATH. Add it to ~/.bashrc or ~/.zshrc to run '{}' from anywhere.",
+                self.xdg.bin_dir().display(),
+                app_id
+            );
+        }
+        if !crate::util::fuse::is_fuse_available() {
+            let distro = crate::util::fuse::DistroInfo::detect();
+            println!(
+                "💡 Tip: libfuse2 not detected. Install '{}' for faster native AppImage startup.",
+                distro.recommended_fuse_package()
+            );
+        }
     }
 
     /// Integrate a local existing AppImage into the system
@@ -274,6 +292,7 @@ impl AppManager {
             "✨ Successfully integrated {}! Run it with: {}",
             app_name, app_id
         );
+        self.print_post_install_hints(&app_id);
 
         Ok(installed_app)
     }
